@@ -1,0 +1,54 @@
+Sub ConsolidateLargeCSVFiles()
+
+    Dim FolderPath As String
+    Dim FileName As String
+    Dim wsMaster As Worksheet
+    Dim wbCSV As Workbook
+    Dim LastRow As Long, LastCol As Long
+    Dim MasterLastRow As Long
+    Dim DataRange As Range
+    Dim DataArr As Variant
+
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+
+    FolderPath = "C:\Users\Nithish Kumar\OneDrive\Desktop\Macro Running\"
+
+    Set wsMaster = ThisWorkbook.Sheets(1)
+    wsMaster.Cells.Clear
+
+    FileName = Dir(FolderPath & "*.csv")
+
+    Do While FileName <> ""
+        Set wbCSV = Workbooks.Open(FolderPath & FileName)
+
+        With wbCSV.Sheets(1)
+            LastRow = .Cells(.Rows.Count, 1).End(xlUp).Row
+            LastCol = .Cells(1, .Columns.Count).End(xlToLeft).Column
+
+            If wsMaster.Cells(1, 1).Value = "" Then
+                ' Copy header + data
+                Set DataRange = .Range(.Cells(1, 1), .Cells(LastRow, LastCol))
+            Else
+                ' Copy only data (exclude header)
+                Set DataRange = .Range(.Cells(2, 1), .Cells(LastRow, LastCol))
+            End If
+
+            DataArr = DataRange.Value
+
+            MasterLastRow = wsMaster.Cells(wsMaster.Rows.Count, 1).End(xlUp).Row
+            If MasterLastRow = 1 And wsMaster.Cells(1, 1).Value = "" Then MasterLastRow = 0
+
+            wsMaster.Cells(MasterLastRow + 1, 1).Resize(UBound(DataArr, 1), UBound(DataArr, 2)).Value = DataArr
+        End With
+
+        wbCSV.Close False
+        FileName = Dir
+    Loop
+
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+
+    MsgBox "All CSV files consolidated successfully!"
+
+End Sub
